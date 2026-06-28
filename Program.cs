@@ -1,29 +1,45 @@
+using Microsoft.EntityFrameworkCore;
+using InsuranceClaim.Data;
+using InsuranceClaim.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Services
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddControllersWithViews();
 
-var app = builder.Build();
+// Database
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
 
-// Configure the HTTP request pipeline.
+// Custom Services
+builder.Services.AddHttpClient<NotificationService>();
+builder.Services.AddScoped<ClaimService>();
+builder.Services.AddScoped<NotificationService>();
+
+var app = builder.Build(); 
+app.UseSwagger();
+app.UseSwaggerUI();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
-
 app.UseAuthorization();
 
-app.MapStaticAssets();
-
+app.MapControllers(); // ← หลัง Build ค่ะ
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
-
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
